@@ -1,0 +1,139 @@
+---
+title: "Reproductible research - Project 1"
+author: "Beatriz Del Fiol"
+date: "16 de junho de 2019"
+output: html_document
+---
+
+1 - Code for reading in the dataset and/or processing the data
+
+```{r 1chuck}
+setwd("C:/Users/beatr/Desktop/CourseraR/5_Reproducible research/Project 1")
+activity <- read.csv("C:/Users/beatr/Desktop/CourseraR/5_Reproducible research/Project 1/activity.csv")
+activity <- read.csv("activity.csv")
+head(activity)
+str(activity)
+steps <- as.numeric("steps")
+date <- as.character.Date(date)
+class(date)
+sum(is.na(activity))
+#na.omit(activity)
+
+
+library(magrittr)
+library(dplyr)
+library(lubridate)
+```
+
+2 - Histogram of the total number of steps taken each day
+
+```{r 2chunck}
+
+stepsperday <- aggregate(steps ~ date, data = activity, FUN = sum, na.rm = TRUE)
+#class(date)
+#class(steps)
+head(stepsperday)
+date  <- as.Date(date, "%Y-%m-%d")
+hist(stepsperday$steps, xlab = "Steps per day", ylab = "Frequency", main = "Histogram: Steps per Day", breaks = 10)
+
+```
+
+3 - Mean and median number of steps taken each day
+
+```{r 3chunck}
+meansteps <- mean(stepsperday$steps, na.rm = TRUE)
+meansteps
+
+mediansteps <- median(stepsperday$steps, na.rm = TRUE)
+mediansteps
+
+summary(stepsperday)
+```
+
+4 - The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r 4chunck}
+
+library(magrittr)
+library(dplyr)
+
+stepsperinterval <- aggregate(steps ~ interval, data = activity, FUN = mean, na.rm = TRUE)
+#head(stepsperinterval)
+plot(x = stepsperinterval$interval, 
+     y = stepsperinterval$steps, 
+     type = "l", 
+     col = "blue",
+     xlab = "Intervals",
+     ylab = "Average Steps Taken per Days",
+     main = "Daily Activity Pattern")
+
+intervalmaxsteps <- stepsperinterval$interval[which.max(stepsperinterval$steps)]
+intervalmaxsteps
+
+```
+
+5 - Code to describe and show a strategy for imputing missing data - Using mean for that day to replace the missing data
+
+```{r 5chunck}
+missingVals <- sum(is.na(activity))
+#missingVals
+
+activityNA <- activity
+head(activityNA)
+nas <- is.na(activityNA$steps)
+
+avg_interval <- tapply(activityNA$steps, activityNA$interval, mean, na.rm=TRUE, simplify = TRUE)
+head(avg_interval)
+activityNA$steps[nas] <- avg_interval[as.character(activityNA$interval[nas])]
+names(activityNA)
+head(activityNA)
+
+stepsperday <- aggregate(steps ~ date, data = activity, FUN = sum)
+str(stepsperday)
+date  <- as.Date(date, "%Y-%m-%d")
+head(stepsperday)
+
+stepsperintervalNA <- aggregate(steps ~ interval, data = activityNA, FUN = mean, na.rm = TRUE)
+head(stepsperintervalNA)
+
+```
+
+6 - Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r 6chunck}
+
+stepsperdayNA <- aggregate(steps ~ date, data = activityNA, FUN = sum, na.rm = TRUE)
+head(stepsperdayNA)
+date  <- as.Date(date, "%Y-%m-%d")
+
+hist(stepsperdayNA$steps, xlab = "Steps per day", ylab = "Frequency", main = "Histogram: Steps per Day", breaks = 10)
+
+```
+
+7 - Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r 7chunck}
+
+activityNA$date <- as.Date(activityNA$date)
+#wday(activityNA$date, label=TRUE)
+activityNA$weekday = weekdays(activityNA$date)
+head(activityNA)
+activityNA$DayCategory <- ifelse(activityNA$weekday %in% c("sábado", "domingo"), "Weekend", "Weekday")
+head(activityNA)
+
+
+library(ggplot2)
+ggplot(activityNA, aes(x =interval , y=steps, color=DayCategory)) +
+        geom_line() +
+        labs(title = "Ave Daily Steps Day Category", x = "Interval", y = "Total Number of Steps") +
+        facet_wrap(~ DayCategory, ncol = 1, nrow=2)
+
+
+```
+
+
+
+
+
+
+
